@@ -1,0 +1,32 @@
+Package: domo
+Title: DBI for DOMO
+Version: 0.3.0
+Authors@R: 
+    person(given = "Shun",
+           family = "Sambongi",
+           role = c("aut", "cre"),
+           email = "shundev3@gmail.com")
+Description: This package provides a DBI interface for DOMO
+    datasets.  
+License: file LICENSE
+URL: https://shunsambongi.github.io/domo,
+    https://github.com/shunsambongi/domo
+BugReports: https://github.com/shunsambongi/domo/issues
+Imports: 
+    assertthat,
+    DBI,
+    dbplyr,
+    dplyr,
+    ellipsis,
+    glue,
+    httr,
+    jsonlite,
+    methods,
+    rlang,
+    utils,
+    vctrs,
+    vroom
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.0
