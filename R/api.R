@@ -9,6 +9,8 @@ new_api_result <- function(content, path, response) {
   )
 }
 
+setOldClass("domo_api_result")
+
 #' @export
 print.domo_api_result <- function(x, ...) {
   method <- x$response$request$method
@@ -24,20 +26,19 @@ domo_api <- function(
   path <- glue::glue(path, .envir = .envir)
   url <- httr::modify_url("https://api.domo.com", path = path)
 
+  config <- map_if(rlang::dots_list(...), is_token, as_header)
   user_agent <- httr::user_agent("https://github.com/shunsambongi/domo")
-  resp <- httr::VERB(verb, url = url, user_agent, ...)
+  resp <- rlang::exec(
+    httr::VERB, verb = verb, url = url, user_agent, !!!config
+  )
   content <- parse_content(resp)
   validate_response(resp, content)
   validate_type(resp, expected_type, content)
   new_api_result(content = content, path = path, response = resp)
 }
 
-GET <- function(path, ..., .envir = parent.frame()) {
-  domo_api(verb = "GET", path = path, ..., .envir = .envir)
-}
-
 validate_type <- function(response, expected_type, content) {
-  if (httr::http_type(response) != expected_type) {
+  if (!is.null(expected_type) && httr::http_type(response) != expected_type) {
     rlang::abort(
       message = glue::glue("API did not return {expected_type}"),
       class = "domo_unexpected_type",
@@ -76,6 +77,8 @@ parse_content <- function(response) {
   switch(
     type,
     "application/json" = jsonlite::fromJSON(text, simplifyVector = FALSE),
+    "application/octet-stream" = text,
+    "text/csv" = readr::read_csv(text),
     {
       rlang::abort(
         message = glue::glue("Cannot parse type {type}"),
@@ -83,7 +86,25 @@ parse_content <- function(response) {
         response = response,
         content = text
       )
-      text
     }
   )
+}
+
+
+# verbs -------------------------------------------------------------------
+
+GET <- function(path, ..., .envir = parent.frame()) {
+  domo_api(verb = "GET", path = path, ..., .envir = .envir)
+}
+
+POST <- function(path, ..., .envir = parent.frame()) {
+  domo_api(verb = "POST", path = path, ..., .envir = .envir)
+}
+
+PUT <- function(path, ..., .envir = parent.frame()) {
+  domo_api(verb = "PUT", path = path, ..., .envir = .envir)
+}
+
+DELETE <- function(path, ..., .envir = parent.frame()) {
+  domo_api(verb = "DELETE", path = path, ..., .envir = .envir)
 }

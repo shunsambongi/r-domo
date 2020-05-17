@@ -20,21 +20,37 @@ domo_token <- function(
   structure(out, class = c("domo_token", class(result)))
 }
 
+setOldClass(c("domo_token", "domo_api_result"))
+
 #' @export
 print.domo_token <- function(x, ...) {
+  vctrs::obj_print(x, ...)
+  invisible(x)
+}
+
+#' @export
+obj_print_header.domo_token <- function(x, ...) {
+  cat_line("<DOMO TOKEN>")
+  invisible(x)
+}
+
+#' @export
+obj_print_data.domo_token <- function(x, ...) {
   domain <- x$content$domain
   userId <- x$content$userId
   scope <- x$content$scope
-  cat_line("<DOMO TOKEN>")
   cat_line("  domain: {domain}")
   cat_line("  userId: {userId}")
   cat_line("  scope: {scope}")
-  invisible(x)
 }
 
 #' @export
 as.character.domo_token <- function(x, ...) {
   x$content$access_token
+}
+
+is_token <- function(x) {
+  inherits(x, "domo_token")
 }
 
 as_header <- function(token) {

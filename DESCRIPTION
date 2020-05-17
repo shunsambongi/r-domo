@@ -17,4 +17,9 @@ Imports:
     httr,
     dplyr,
     rlang,
-    glue
+    glue,
+    ellipsis,
+    readr,
+    DBI,
+    methods,
+    vctrs
