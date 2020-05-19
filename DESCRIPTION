@@ -1,14 +1,25 @@
 Package: domo
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
+Title: DBI for DOMO
+Version: 0.0.1
 Authors@R: 
     person(given = "Shun",
            family = "Sambongi",
            role = c("aut", "cre"),
            email = "shundev3@gmail.com")
-Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to
-    pick a license
+Description: This package provides a DBI interface for DOMO datasets.  
+License: MIT + file LICENSE
+Imports: 
+    DBI,
+    dplyr,
+    ellipsis,
+    glue,
+    httr,
+    jsonlite,
+    methods,
+    rlang,
+    utils,
+    vctrs,
+    vroom
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
