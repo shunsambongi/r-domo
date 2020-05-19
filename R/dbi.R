@@ -36,7 +36,11 @@ setClass(
 #' @export
 setMethod("show", "DomoConnection", function(object) {
   cat_line("<DomoConnection>")
-  vctrs::obj_print_data(object@token)
+  if (DBI::dbIsValid(object)) {
+    vctrs::obj_print_data(object@token)
+  } else {
+    cat_line("  DISCONNECTED")
+  }
 })
 
 
@@ -53,6 +57,16 @@ setMethod("dbConnect", "DomoDriver", function(
   new("DomoConnection", token = token)
 })
 
+#' @export
+setMethod("dbDisconnect", "DomoConnection", function(conn, ...) {
+  conn@token$content <- NULL
+  invisible(TRUE)
+})
+
+#' @export
+setMethod("dbIsValid", "DomoConnection", function(dbObj, ...) {
+  !is.null(dbObj@token$content)
+})
 
 # result ------------------------------------------------------------------
 
