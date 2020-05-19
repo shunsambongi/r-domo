@@ -3,10 +3,7 @@ retrieve_dataset <- function(token, dataset_id, ...) {
 }
 
 create_dataset <- function(token, name, schema, description = "", ...) {
-  if (is.data.frame(schema)) {
-    schema <- domo::schema(schema)
-  }
-  body <- named_list(name, description, schema = list(columns = schema))
+  body <- dataset_body(name, description, schema)
   POST(
     "/v1/datasets",
     token,
@@ -64,4 +61,14 @@ import_dataset <- function(
     httr::content_type("text/csv"),
     expected_type = "application/octet-stream"
   )
+}
+
+
+# helpers -----------------------------------------------------------------
+
+dataset_body <- function(name, description, schema) {
+  if (is.data.frame(schema)) {
+    schema <- domo::schema(schema)
+  }
+  named_list(name, description, schema = list(columns = schema))
 }

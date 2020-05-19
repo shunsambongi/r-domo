@@ -97,6 +97,10 @@ GET <- function(path, ..., .envir = parent.frame()) {
   domo_api(verb = "GET", path = path, ..., .envir = .envir)
 }
 
+PATCH <- function(path, ..., .envir = parent.frame()) {
+  domo_api(verb = "PATCH", path = path, ..., .envir = .envir)
+}
+
 POST <- function(path, ..., .envir = parent.frame()) {
   domo_api(verb = "POST", path = path, ..., .envir = .envir)
 }
