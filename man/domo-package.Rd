@@ -2,8 +2,6 @@
 % Please edit documentation in R/domo-package.R
 \docType{package}
 \name{domo-package}
-\alias{domo}
-\alias{domo-package}
 \title{domo: What the Package Does (One Line, Title Case)}
 \description{
 What the package does (one paragraph).

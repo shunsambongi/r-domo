@@ -11,12 +11,21 @@ new_api_result <- function(content, path, response) {
 
 setOldClass("domo_api_result")
 
+api_result <- function(
+  response, path = url_path(response), expected_type = "application/json"
+) {
+  content <- parse_content(response)
+  validate_response(response, content)
+  validate_type(response, expected_type, content)
+  new_api_result(content, path, response)
+}
+
 #' @export
 print.domo_api_result <- function(x, ...) {
   method <- x$response$request$method
   path <- x$path
   cat_line("<DOMO: {method} {path}>")
-  str(x$content)
+  utils::str(x$content)
   invisible(x)
 }
 
@@ -26,15 +35,17 @@ domo_api <- function(
   path <- glue::glue(path, .envir = .envir)
   url <- httr::modify_url("https://api.domo.com", path = path)
 
-  config <- map_if(rlang::dots_list(...), is_token, as_header)
   user_agent <- httr::user_agent("https://github.com/shunsambongi/domo")
-  resp <- rlang::exec(
-    httr::VERB, verb = verb, url = url, user_agent, !!!config
-  )
-  content <- parse_content(resp)
-  validate_response(resp, content)
-  validate_type(resp, expected_type, content)
-  new_api_result(content = content, path = path, response = resp)
+  config <- rlang::dots_list(...)
+  do_request <- function() {
+    config <- map_if(config, is_token, as_header)
+    resp <- rlang::exec(
+      httr::VERB, verb = verb, url = url, user_agent, !!!config
+    )
+    api_result(resp, path, expected_type)
+  }
+
+  withRestarts(do_request(), "refreshed" = do_request)
 }
 
 validate_type <- function(response, expected_type, content) {

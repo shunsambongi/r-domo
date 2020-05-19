@@ -4,11 +4,19 @@
 \name{DomoDriver-class}
 \alias{DomoDriver-class}
 \alias{dbUnloadDriver,DomoDriver-method}
-\title{Driver for Domo}
+\alias{dbDataType,DomoDriver-method}
+\alias{dbIsValid,DomoDriver-method}
+\title{Class DomoDriver (and methods)}
 \usage{
 \S4method{dbUnloadDriver}{DomoDriver}(drv, ...)
+
+\S4method{dbDataType}{DomoDriver}(dbObj, obj, ...)
+
+\S4method{dbIsValid}{DomoDriver}(dbObj, ...)
 }
 \description{
-Driver for Domo
+DomoDriver objects are created by \code{\link[=domo]{domo()}}, and are used to select the
+correct method in \code{\link[DBI:dbConnect]{DBI::dbConnect()}}.
+It is used purely for dispatch.
 }
 \keyword{internal}

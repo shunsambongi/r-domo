@@ -16,3 +16,9 @@ named_list <- function(...) {
   names[names == ""] <- map(exprs, deparse)[names == ""]
   rlang::set_names(values, names)
 }
+
+url_path <- function(response) {
+  out <- httr::parse_url(response$url)[["path"]]
+  if (!startsWith(out, "/")) out <- paste0("/", out)
+  out
+}

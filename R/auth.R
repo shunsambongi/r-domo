@@ -1,7 +1,6 @@
 
 # token -------------------------------------------------------------------
 
-#' @export
 domo_token <- function(
   client_id = domo_client_id(),
   client_secret = domo_client_secret(),
@@ -28,13 +27,13 @@ print.domo_token <- function(x, ...) {
   invisible(x)
 }
 
-#' @export
+# registered in zzz.R
 obj_print_header.domo_token <- function(x, ...) {
   cat_line("<DOMO TOKEN>")
   invisible(x)
 }
 
-#' @export
+# registered in zzz.R
 obj_print_data.domo_token <- function(x, ...) {
   domain <- x$content$domain
   userId <- x$content$userId
@@ -56,6 +55,28 @@ is_token <- function(x) {
 as_header <- function(token) {
   httr::add_headers(
     Authorization = paste("Bearer", as.character(token))
+  )
+}
+
+refresh_token <- function(token) {
+  result <- api_result(httr::rerequest(token$response))
+  for (var in names(result)) {
+    token[[var]] <- result[[var]]
+  }
+  invisible(token)
+}
+
+with_refresh <- function(token, code) {
+  withCallingHandlers(
+    force(code),
+    domo_api_error = function(e) {
+      name <- "refreshed"
+      restart <- findRestart(name)
+      if (e$response$status_code == 401 && !is.null(restart)) {
+        refresh_token(token)
+        invokeRestart(name)
+      }
+    }
   )
 }
 

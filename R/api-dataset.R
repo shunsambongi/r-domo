@@ -68,7 +68,7 @@ import_dataset <- function(
 
 dataset_body <- function(name, description, schema) {
   if (is.data.frame(schema)) {
-    schema <- domo::schema(schema)
+    schema <- domo_schema(schema)
   }
   named_list(name, description, schema = list(columns = schema))
 }

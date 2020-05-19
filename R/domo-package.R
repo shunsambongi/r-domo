@@ -1,3 +1,4 @@
+#' @aliases NULL
 #' @keywords internal
 "_PACKAGE"
 

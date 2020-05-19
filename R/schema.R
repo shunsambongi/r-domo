@@ -1,5 +1,5 @@
 
-schema <- function(data) {
+domo_schema <- function(data) {
   unname(imap(as.list(data), function(col, name) {
     list(name = name, type = domo_data_type(col))
   }))

@@ -3,7 +3,17 @@
 \docType{class}
 \name{DomoResult-class}
 \alias{DomoResult-class}
+\alias{dbClearResult,DomoResult-method}
+\alias{dbFetch,DomoResult-method}
+\alias{dbHasCompleted,DomoResult-method}
 \title{Domo results class}
+\usage{
+\S4method{dbClearResult}{DomoResult}(res, ...)
+
+\S4method{dbFetch}{DomoResult}(res, n = -1, ...)
+
+\S4method{dbHasCompleted}{DomoResult}(res, ...)
+}
 \description{
 Domo results class
 }
