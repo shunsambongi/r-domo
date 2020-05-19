@@ -51,7 +51,7 @@ import_dataset <- function(
   token, dataset_id, data, ..., update_method = c("REPLACE", "APPEND")
 ) {
   query <- list(updateMethod = match.arg(update_method))
-  body <- readr::format_csv(data, col_names = FALSE)
+  body <- vroom::vroom_format(data, delim = ",", na = "\\N", col_names = FALSE)
   PUT(
     "/v1/datasets/{dataset_id}/data",
     query = query,

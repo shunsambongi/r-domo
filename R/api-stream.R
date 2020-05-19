@@ -101,13 +101,20 @@ list_stream_executions <- function(
 upload_data_part <- function(
   token, stream_id, execution_id, part_id, data, ...
 ) {
-  body <- readr::format_csv(data, col_names = FALSE)
+  if (is.data.frame(data)) {
+    data <- compress_data_part(data)
+  } else if (!is.raw(data)) {
+    rlang::abort(
+      "Invalid data part",
+      class = "domo_invalid_data_part"
+    )
+  }
   PUT(
     "/v1/streams/{stream_id}/executions/{execution_id}/part/{part_id}",
     token,
-    body = body,
-    encode = "raw",
-    httr::content_type("text/csv")
+    body = data,
+    httr::content_type("text/csv"),
+    httr::add_headers("Content-Encoding" = "gzip")
   )
 }
 
@@ -117,4 +124,36 @@ commit_stream_execution <- function(token, stream_id, execution_id, ...) {
 
 abort_stream_execution <- function(token, stream_id, execution_id, ...) {
   PUT("/v1/streams/{stream_id}/executions/{execution_id}/abort", token)
+}
+
+
+
+# helpers -----------------------------------------------------------------
+
+rows_per_data_part <- function(data, target = 10000000) {
+  size <- unclass(utils::object.size(data))
+  target <- target * 3L # compression factor
+  out <- nrow(data)
+  if (size > target) {
+    out <- floor(out * target / size)
+  }
+  out
+}
+
+split_data_parts <- function(data, rows_per_part = rows_per_data_part(data)) {
+  unname(split(data, (seq_len(nrow(data)) - 1) %/% rows_per_part + 1))
+}
+
+compress_data_part <- function(part) {
+  tmp <- tempfile(fileext = ".gz")
+  on.exit(unlink(tmp), add = TRUE)
+
+  gzcon <- gzfile(tmp, "wb")
+  on.exit(try(close(gzcon), silent = TRUE), add = TRUE)
+
+  vroom::vroom_write(part, gzcon, delim = ",", na = "\\N", col_names = FALSE)
+  close(gzcon)
+
+  size <- file.size(tmp)
+  readBin(tmp, "raw", n = size)
 }

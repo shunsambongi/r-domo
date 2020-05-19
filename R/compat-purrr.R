@@ -46,3 +46,8 @@ imap <- function(.x, .f, ...) {
   index <- names(.x) %||% seq_along(.x)
   map2(.x, index, .f, ...)
 }
+
+iwalk <- function(.x, .f, ...) {
+  imap(.x, .f, ...)
+  invisible(.x)
+}

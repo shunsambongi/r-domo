@@ -78,7 +78,7 @@ parse_content <- function(response) {
     type,
     "application/json" = jsonlite::fromJSON(text, simplifyVector = FALSE),
     "application/octet-stream" = text,
-    "text/csv" = readr::read_csv(text),
+    "text/csv" = vroom::vroom(text, delim = ","),
     {
       rlang::abort(
         message = glue::glue("Cannot parse type {type}"),

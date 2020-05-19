@@ -137,10 +137,10 @@ setMethod(
   "dbCreateTable",
   "DomoConnection",
   function(conn, name, fields, ..., row.names = NULL, temporary = FALSE) {
-    result <- create_dataset(
+    result <- create_stream(
       token = conn@token, name = name, schema = fields, ...
     )
-    id <- result$content$id
+    id <- result$content$dataSet$id
     message(glue::glue("Created table {id}"))
     invisible(TRUE)
   }
@@ -154,7 +154,29 @@ setMethod(
     old <- options("stringsAsFactors" = FALSE)
     on.exit(do.call(options, old), add = TRUE)
     value <- as.data.frame(value)
-    import_dataset(token = conn@token, dataset_id = name, data = value, ...)
+
+    result <- search_streams(conn@token, datasource_id = name)
+    if (!length(result$content)) {
+      rlang::abort(glue::glue("Could not find stream for dataset {name}"))
+    } else if (length(result$content) > 1) {
+      rlang::abort(glue::glue("Found multiple streams for dataset {name}"))
+    }
+    stream_id <- result$content[[1L]]$id
+
+    result <- create_stream_execution(conn@token, stream_id)
+    exec_id <- result$content$id
+
+    parts <- split_data_parts(value)
+
+    withCallingHandlers({
+      iwalk(parts, function(part, part_id) {
+        upload_data_part(conn@token, stream_id, exec_id, part_id, part)
+      })
+      commit_stream_execution(conn@token, stream_id, exec_id)
+    }, error = function(e) {
+      abort_stream_execution(conn@token, stream_id, exec_id)
+    })
+
     invisible(TRUE)
   }
 )
