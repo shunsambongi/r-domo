@@ -3,6 +3,7 @@
 S3method(as.character,domo_token)
 S3method(print,domo_api_result)
 S3method(print,domo_token)
+export(browse_dataset)
 export(domo)
 exportClasses(DomoConnection)
 exportClasses(DomoDriver)

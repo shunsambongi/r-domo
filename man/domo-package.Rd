@@ -2,9 +2,9 @@
 % Please edit documentation in R/domo-package.R
 \docType{package}
 \name{domo-package}
-\title{domo: What the Package Does (One Line, Title Case)}
+\title{domo: DBI for DOMO}
 \description{
-What the package does (one paragraph).
+This package provides a DBI interface for DOMO datasets.
 }
 \author{
 \strong{Maintainer}: Shun Sambongi \email{shundev3@gmail.com}
