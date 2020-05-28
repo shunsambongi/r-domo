@@ -11,7 +11,7 @@ experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](h
 
 This is an R package that wraps [Domo’s REST
 API](https://developer.domo.com/docs/dataset/overview-5). This package
-is [`DBI`](https://github.com/r-dbi/DBI)-compliant.
+is [DBI](https://github.com/r-dbi/DBI)-compliant.
 
 ## Installation
 
@@ -34,8 +34,22 @@ con <- dbConnect(domo())
 dbCreateTable(con, "iris", iris)
 
 # dataset ID will be available in the dataset URL
-dbWriteTable(con, "b06e0040-9aa6-11ea-8515-f76f845b5ce6")
+dbWriteTable(con, "b06e0040-9aa6-11ea-8515-f76f845b5ce6", iris)
 dbReadTable(con, "b06e0040-9aa6-11ea-8515-f76f845b5ce6")
+```
+
+## dbplyr
+
+[dbplyr](https://github.com/tidyverse/dbplyr/) support is experimental.
+
+``` r
+tbl(con, "b06e0040-9aa6-11ea-8515-f76f845b5ce6") %>%
+  select(Sepal.Length, Sepal.Width, Species) %>%
+  mutate(Sepal.Sum = Sepal.Length + Sepal.Width) %>%
+  group_by(Species) %>%
+  summarise(Max.Sepal.Sum = max(Sepal.Sum, na.rm = TRUE)) %>%
+  ungroup() %>%
+  filter(Species == "setosa")
 ```
 
 ## Credentials
@@ -54,5 +68,7 @@ If you need to connect to Domo using multiple clients with different
 permission scopes, or you need to connect to multiple Domo instances,
 pass the client ID and secret values to the `dbConnect` method directly:
 
-    con1 <- dbConnect(domo::domo(), "<client id 1>", "<client secret 1>")
-    con2 <- dbConnect(domo::domo(), "<client id 2>", "<client secret 2>")
+``` r
+con1 <- dbConnect(domo::domo(), "<client id 1>", "<client secret 1>")
+con2 <- dbConnect(domo::domo(), "<client id 2>", "<client secret 2>")
+```

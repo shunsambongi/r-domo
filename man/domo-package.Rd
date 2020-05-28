@@ -4,7 +4,8 @@
 \name{domo-package}
 \title{domo: DBI for DOMO}
 \description{
-This package provides a DBI interface for DOMO datasets.
+This package provides a DBI interface for DOMO
+    datasets.
 }
 \author{
 \strong{Maintainer}: Shun Sambongi \email{shundev3@gmail.com}
