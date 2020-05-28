@@ -21,6 +21,7 @@ delete_dataset <- function(token, dataset_id, ...) {
 }
 
 query_dataset <- function(token, dataset_id, sql, ...) {
+  sql <- gsub("\\s", " ", sql)
   body <- named_list(sql)
   POST(
     "/v1/datasets/query/execute/{dataset_id}",
