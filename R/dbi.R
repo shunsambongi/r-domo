@@ -134,7 +134,7 @@ setMethod(
     })
     id <- result$content$dataSet$id
     message(glue::glue("Created table {id}"))
-    invisible(TRUE)
+    invisible(id)
   }
 )
 
