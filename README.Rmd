@@ -25,7 +25,7 @@ This is an R package that wraps [Domo's REST API](https://developer.domo.com/doc
 
 And the development version from [GitHub](https://github.com/) with:
 
-``` r
+```r
 # install.packages("devtools")
 devtools::install_github("shunsambongi/domo")
 ```
@@ -39,11 +39,12 @@ library(domo)
 
 con <- dbConnect(domo())
 
-dbCreateTable(con, "iris", iris)
+dataset_id <- dbCreateTable(con, "iris", iris)
 
-# dataset ID will be available in the dataset URL
-dbWriteTable(con, "b06e0040-9aa6-11ea-8515-f76f845b5ce6", iris)
-dbReadTable(con, "b06e0040-9aa6-11ea-8515-f76f845b5ce6")
+# dataset ID will also be available in the dataset URL 
+# e.g. b06e0040-9aa6-11ea-8515-f76f845b5ce6
+dbWriteTable(con, dataset_id, iris, overwrite = TRUE)
+dbReadTable(con, dataset_id)
 ```
 
 

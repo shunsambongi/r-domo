@@ -45,20 +45,20 @@ list_streams <- function(token, ..., limit = NULL, offset = NULL) {
   GET("/v1/streams", token, query = query)
 }
 
-search_streams <- function(token, datasource_id = NULL, owner_id = NULL, ...) {
-  missing_datasource_id <- is.null(datasource_id)
+search_streams <- function(token, dataset_id = NULL, owner_id = NULL, ...) {
+  missing_dataset_id <- is.null(dataset_id)
   missing_owner_id <- is.null(owner_id)
 
-  if (missing_datasource_id && missing_owner_id) {
+  if (missing_dataset_id && missing_owner_id) {
     rlang::abort(
-      "`datasource_id` or `owner_id` must be provided",
+      "`dataset_id` or `owner_id` must be provided",
       class = "domo_search_streams_query_error"
     )
   }
 
-  if (!missing_datasource_id && !missing_owner_id) {
+  if (!missing_dataset_id && !missing_owner_id) {
     rlang::abort(
-      "Only one of `datasource_id` and `owner_id` can be provided",
+      "Only one of `dataset_id` and `owner_id` can be provided",
       class = "domo_search_streams_query_error"
     )
   }
@@ -70,7 +70,7 @@ search_streams <- function(token, datasource_id = NULL, owner_id = NULL, ...) {
   }
 
   query <- list(
-    q = format_q("dataSource.id", datasource_id),
+    q = format_q("dataSource.id", dataset_id),
     q = format_q("dataSource.owner.id", owner_id)
   )
   GET("/v1/streams/search", token, query = query)
