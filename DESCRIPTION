@@ -1,6 +1,6 @@
 Package: domo
 Title: DBI for DOMO
-Version: 0.1.1
+Version: 0.2.0
 Authors@R: 
     person(given = "Shun",
            family = "Sambongi",
@@ -10,6 +10,7 @@ Description: This package provides a DBI interface for DOMO
     datasets.  
 License: MIT + file LICENSE
 Imports: 
+    assertthat,
     crayon,
     DBI,
     dbplyr,

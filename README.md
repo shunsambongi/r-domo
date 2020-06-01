@@ -31,11 +31,12 @@ library(domo)
 
 con <- dbConnect(domo())
 
-dbCreateTable(con, "iris", iris)
+dataset_id <- dbCreateTable(con, "iris", iris)
 
-# dataset ID will be available in the dataset URL
-dbWriteTable(con, "b06e0040-9aa6-11ea-8515-f76f845b5ce6", iris)
-dbReadTable(con, "b06e0040-9aa6-11ea-8515-f76f845b5ce6")
+# dataset ID will also be available in the dataset URL 
+# e.g. b06e0040-9aa6-11ea-8515-f76f845b5ce6
+dbWriteTable(con, dataset_id, iris, overwrite = TRUE)
+dbReadTable(con, dataset_id)
 ```
 
 ## dbplyr
@@ -43,6 +44,8 @@ dbReadTable(con, "b06e0040-9aa6-11ea-8515-f76f845b5ce6")
 [dbplyr](https://github.com/tidyverse/dbplyr/) support is experimental.
 
 ``` r
+library(dplyr)
+
 tbl(con, "b06e0040-9aa6-11ea-8515-f76f845b5ce6") %>%
   select(Sepal.Length, Sepal.Width, Species) %>%
   mutate(Sepal.Sum = Sepal.Length + Sepal.Width) %>%
