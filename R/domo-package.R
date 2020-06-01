@@ -11,3 +11,9 @@ NULL
 #' @import DBI
 #' @import methods
 NULL
+
+#' @importFrom assertthat
+#'   assert_that
+#'   is.string
+#'   is.flag
+TRUE
