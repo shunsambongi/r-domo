@@ -1,6 +1,12 @@
 .onLoad <- function(...) {
+  requireNamespace("dbplyr", quietly = TRUE)
+
   vctrs::s3_register("vctrs::obj_print_header", "domo_token")
   vctrs::s3_register("vctrs::obj_print_data", "domo_token")
+
+  vctrs::s3_register("vctrs::obj_print_header", "domo_result_set")
+  vctrs::s3_register("vctrs::obj_print_data", "domo_result_set")
+  vctrs::s3_register("vctrs::obj_print_footer", "domo_result_set")
 
   # dbplyr / lazy tbl
   vctrs::s3_register("dplyr::tbl", "DomoConnection")
