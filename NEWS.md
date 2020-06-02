@@ -4,6 +4,9 @@
   `dbFetch`.
 * New `dbColumnInfo`, `dbGetStatement`, and `dbIsValid` methods for 
   `DomoResult`.
+* New `DomoTblConnection` class to simplify dbplyr code
+* New `sql_translate_env` method for `DomoTblConnection`
+* New `paste` and `paste0` translations for `DomoTblConnection` class
 
 # domo 0.2.0
 

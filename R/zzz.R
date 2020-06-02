@@ -10,8 +10,7 @@
 
   # dbplyr / lazy tbl
   vctrs::s3_register("dplyr::tbl", "DomoConnection")
-  vctrs::s3_register("dplyr::db_query_fields", "DomoConnection")
-  vctrs::s3_register("dbplyr::db_collect", "DomoConnection")
+  vctrs::s3_register("dbplyr::sql_translate_env", "DomoTblConnection")
 
   # unsupported ops
   vctrs::s3_register("dplyr::compute", "DomoConnection")
