@@ -1,40 +1,80 @@
+# DomoTblConnection -------------------------------------------------------
+
+#' DomoTblConnection class
+#'
+#' @export
+#' @keywords internal
+setClass(
+  "DomoTblConnection",
+  contains = "DomoConnection",
+  slots = list(dataset_id = "character")
+)
+
+domo_tbl_send_query <- function(conn, statement, ...) {
+  callNextMethod(conn, statement, conn@dataset_id, ...)
+}
+
+#' @export
+#' @rdname DomoTblConnection-class
+setMethod(
+  "dbSendQuery",
+  c("DomoTblConnection", "character"),
+  domo_tbl_send_query
+)
+
+
+# tbl ---------------------------------------------------------------------
+
 # zzz.R
 tbl.DomoConnection <- function(src, from, ...) {
-  attr(src, "domo_dataset_id") <- from
+  src <- as(src, "DomoTblConnection")
+  src@dataset_id <- from
   from <- dbplyr::as.sql("table")
   NextMethod()
 }
 
-# zzz.R
-db_query_fields.DomoConnection <- function(con, sql, ...) {
-  sql <- dplyr::sql_select(
-    con = con,
-    select = dbplyr::sql("*"),
-    from = dplyr::sql_subquery(con, sql),
-    where = dbplyr::sql("0 = 1")
-  )
-  qry <- DBI::dbSendQuery(con, sql, attr(con, "domo_dataset_id"))
-  on.exit(DBI::dbClearResult(qry))
-  res <- DBI::dbFetch(qry, 0)
-  names(res)
+
+# sql ---------------------------------------------------------------------
+
+#' Simulate Domo Connection
+#'
+#' For testing SQL translations
+#'
+#' @export
+simulate_domo <- function() {
+  dbplyr::simulate_dbi(c("DomoTblConnection", "DomoConnection"))
 }
 
 # zzz.R
-db_collect.DomoConnection <- function(con, sql, n = -1, warn_incomplete = TRUE, ...) {
-  res <- DBI::dbSendQuery(con, sql, attr(con, "domo_dataset_id"))
-  tryCatch({
-    out <- DBI::dbFetch(res, n = n)
-    if (warn_incomplete && !DBI::dbHasCompleted(res)) {
-      warning(
-        "Not all rows retrieved. Use n = -1 to retrieve all", call. = FALSE
+sql_translate_env.DomoTblConnection <- function(con) {
+  dbplyr::sql_variant(
+    scalar = dbplyr::sql_translator(
+      paste = sql_paste(" "),
+      paste0 = sql_paste(""),
+      .parent = dbplyr::base_scalar
+    ),
+    aggregate = dbplyr::base_agg,
+    window = dbplyr::base_win
+  )
+}
+
+sql_paste <- function(default_sep) {
+  force(default_sep)
+  function(..., sep = default_sep, collapse = NULL) {
+    if (!is.null(collapse)) {
+      stop(
+        "`collapse` not supported in Domo translation of `paste()`.\n",
+        call. = FALSE
       )
     }
-  }, finally = {
-    DBI::dbClearResult(res)
-  })
-  out
+    args <- rlang::quos(...)
+    if (sep != "") {
+      args <- c(rbind(sep, args))[-1]
+    }
+    expr <- rlang::expr(dbplyr::sql_call2("CONCAT", !!!args))
+    rlang::eval_tidy(expr)
+  }
 }
-
 
 # unsupported ops ---------------------------------------------------------
 
@@ -112,7 +152,7 @@ setdiff.tbl_DomoConnection <- function(x, y, ...) {
 # formatting --------------------------------------------------------------
 
 #' @export
-format.tbl_DomoConnection <- function(x, ...) {
+format.tbl_DomoTblConnection <- function(x, ...) {
   source <- format_tbl_source(x)
   domain <- format_tbl_domain(x)
 
@@ -122,7 +162,7 @@ format.tbl_DomoConnection <- function(x, ...) {
 }
 
 format_tbl_source <- function(x) {
-  dataset_id <- attr(x$src$con, "domo_dataset_id") %||% "unknown"
+  dataset_id <- x$src$con@dataset_id %||% "unknown"
   sprintf("dataset<%s> [?? x %d]", dataset_id, ncol(x))
 }
 
