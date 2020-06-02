@@ -1,5 +1,10 @@
 # domo (development version)
 
+* Parameterized queries now possible using `dbSendQuery`, `dbBind`, and
+  `dbFetch`.
+* New `dbColumnInfo`, `dbGetStatement`, and `dbIsValid` methods for 
+  `DomoResult`.
+
 # domo 0.2.0
 
 ## Breaking changes
