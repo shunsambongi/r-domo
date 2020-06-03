@@ -1,5 +1,9 @@
 # domo (development version)
 
+* `dbWriteTable` now updates the dataset schema when `overwrite = TRUE` and the
+  schema of the `value` argument does not match the schema of the dataset.
+* `dbCreateTable` can now accept a named list of fields for the `fields`
+  parameter.
 * New `pkgdown` website.
 * New `dbGetInfo` methods for `DomoDriver`, `DomoConnection`, and `DomoResult` 
   classes.

@@ -128,6 +128,30 @@ domo_upload_dataset <- function(con, dataset_id, data, update_method) {
   invisible(TRUE)
 }
 
+domo_check_fields <- function(con, dataset_id, data, update_method) {
+  data_fields <- domo_fields(data)
+  domo_fields <- domo_fields(con, dataset_id)
+
+  if (identical(data_fields, domo_fields)) {
+    return(invisible())
+  }
+
+  if (update_method == "APPEND"){
+    msg <- "Cannot append due to mismatch in fields / data types."
+    rlang::abort(
+      msg,
+      class = "domo_invalid_schema",
+      data_fields = data_fields,
+      domo_fields = domo_fields
+    )
+  }
+
+  with_refresh(con@token, {
+    update_dataset(con@token, dataset_id, schema = data_fields)
+  })
+  invisible()
+}
+
 domo_write_table <- function(
   conn,
   name,
@@ -148,6 +172,7 @@ domo_write_table <- function(
   )
   domo_check_dataset_exists(conn, dataset_id = name)
   update_method <- domo_choose_update_method(overwrite, append)
+  domo_check_fields(conn, name, data, update_method)
 
   if (stream) {
     domo_upload_stream(conn, name, data, update_method)

@@ -84,7 +84,7 @@ setMethod(
 
 domo_data_type_df <- function(dbObj, obj, ...) {
   ellipsis::check_dots_empty()
-  map_chr(obj, domo_data_type)
+  domo_fields(obj)
 }
 
 #' @rdname DomoConnection
