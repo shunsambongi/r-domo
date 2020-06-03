@@ -151,7 +151,9 @@ compress_data_part <- function(part) {
   gzcon <- gzfile(tmp, "wb")
   on.exit(try(close(gzcon), silent = TRUE), add = TRUE)
 
-  vroom::vroom_write(part, gzcon, delim = ",", na = "\\N", col_names = FALSE)
+  vroom::vroom_write(
+    part, gzcon, delim = ",", na = "\\N", col_names = FALSE, progress = FALSE
+  )
   close(gzcon)
 
   size <- file.size(tmp)

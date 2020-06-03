@@ -7,6 +7,15 @@
 This package provides a DBI interface for DOMO
     datasets.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://shunsambongi.github.io/domo}
+  \item \url{https://github.com/shunsambongi/domo}
+  \item Report bugs at \url{https://github.com/shunsambongi/domo/issues}
+}
+
+}
 \author{
 \strong{Maintainer}: Shun Sambongi \email{shundev3@gmail.com}
 

@@ -12,7 +12,8 @@
 
 \item{statement}{a character string containing SQL.}
 
-\item{dataset_id}{The dataset ID (e.g. 77194824-a5c1-11ea-9600-0116159276e2).}
+\item{dataset_id}{The dataset ID
+(e.g. \code{"77194824-a5c1-11ea-9600-0116159276e2"}).}
 
 \item{...}{Other parameters passed on to methods.}
 }
