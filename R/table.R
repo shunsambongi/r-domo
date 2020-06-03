@@ -1,21 +1,19 @@
 # dbCreateTable -----------------------------------------------------------
 
+domo_create_table <- function(
+  conn, name, fields, ..., row.names = NULL, temporary = FALSE
+) {
+  assert_that(is.null(row.names), isFALSE(temporary))
+  token <- conn@token
+  result <- with_refresh(token, create_stream(token, name, fields))
+  id <- result$content$dataSet$id
+  message(glue::glue("Created dataset {id}"))
+  invisible(id)
+}
+
 #' @rdname DomoConnection-class
 #' @export
-setMethod(
-  "dbCreateTable",
-  "DomoConnection",
-  function(conn, name, fields, ..., row.names = NULL, temporary = FALSE) {
-    with_refresh(conn@token, {
-      result <- create_stream(
-        token = conn@token, name = name, schema = fields, ...
-      )
-    })
-    id <- result$content$dataSet$id
-    message(glue::glue("Created table {id}"))
-    invisible(id)
-  }
-)
+setMethod("dbCreateTable", "DomoConnection", domo_create_table)
 
 
 # dbWriteTable ------------------------------------------------------------
@@ -143,94 +141,124 @@ setMethod(
 )
 
 
+# dbAppendTable -----------------------------------------------------------
+
+domo_append_table <- function(
+  conn, name, value, ..., stream = TRUE, row.names = NULL
+) {
+  ellipsis::check_dots_empty()
+  assert_that(is.null(row.names))
+  domo_write_table(conn, name, value, stream = stream, append = TRUE)
+}
+
+#' @rdname DomoConnection-class
+#' @export
+setMethod(
+  "dbAppendTable",
+  c("DomoConnection", "character"),
+  domo_append_table
+)
+
+
 # dbReadTable -------------------------------------------------------------
+
+domo_read_table <- function(conn, name, ...) {
+  token <- conn@token
+  with_refresh(token, {
+    result <- retrieve_dataset(token = token, dataset_id = name)
+    if (result$content$rows == 0) {
+      columns <- result$content$schema$columns
+      names <- map_chr(columns, function(x) x$name)
+      out <- r_data_type(map_chr(columns, function(x) x$type))
+      out <- rlang::set_names(out, names)
+      return(dplyr::as_tibble(out))
+    } else {
+      result <- export_dataset(token = token, dataset_id = name, ...)
+      result$content
+    }
+  })
+}
 
 #' @rdname DomoConnection-class
 #' @export
 setMethod(
   "dbReadTable",
   c("DomoConnection", "character"),
-  function(conn, name, ...) {
-    with_refresh(conn@token, {
-      result <- retrieve_dataset(token = conn@token, dataset_id = name)
-      if (result$content$rows == 0) {
-        columns <- result$content$schema$columns
-        names <- map_chr(columns, function(x) x$name)
-        out <- r_data_type(map_chr(columns, function(x) x$type))
-        out <- rlang::set_names(out, names)
-        return(dplyr::as_tibble(out))
-      } else {
-        result <- export_dataset(token = conn@token, dataset_id = name, ...)
-        result$content
-      }
-    })
-  }
+  domo_read_table
 )
 
 
 # dbRemoveTable -----------------------------------------------------------
+
+domo_remove_table <- function(conn, name, ...) {
+  with_refresh(conn@token, {
+    delete_dataset(token = conn@token, dataset_id = name, ...)
+  })
+  invisible(TRUE)
+}
 
 #' @rdname DomoConnection-class
 #' @export
 setMethod(
   "dbRemoveTable",
   c("DomoConnection", "character"),
-  function(conn, name, ...) {
-    with_refresh(conn@token, {
-      delete_dataset(token = conn@token, dataset_id = name, ...)
-    })
-    invisible(TRUE)
-  }
+  domo_remove_table
 )
 
 
 # dbExistsTable -----------------------------------------------------------
+
+domo_exists_table <- function(conn, name, ...) {
+  withRestarts(
+    withCallingHandlers(
+      with_refresh(conn@token, {
+        retrieve_dataset(token = conn@token, dataset_id = name, ...)
+        TRUE
+      }),
+      domo_api_error = function(e) {
+        if (e$response$status_code == 404) invokeRestart("not_found")
+      }
+    ),
+    not_found = function() FALSE
+  )
+}
 
 #' @rdname DomoConnection-class
 #' @export
 setMethod(
   "dbExistsTable",
   c("DomoConnection", "character"),
-  function(conn, name, ...) {
-    withRestarts(
-      withCallingHandlers(
-        with_refresh(conn@token, {
-          retrieve_dataset(token = conn@token, dataset_id = name, ...)
-          TRUE
-        }),
-        domo_api_error = function(e) {
-          if (e$response$status_code == 404) invokeRestart("not_found")
-        }
-      ),
-      not_found = function() FALSE
-    )
-  }
+  domo_exists_table
 )
 
 
 # dbListTables ------------------------------------------------------------
 
-#' @rdname DomoConnection-class
-#' @export
-setMethod("dbListTables", c("DomoConnection"), function(conn, ...) {
+domo_list_tables <- function(conn, ...) {
   with_refresh(conn@token, {
     result <- list_datasets(conn@token, ...)
   })
   map_chr(result$content, function(x) x$id)
-})
+}
+
+#' @rdname DomoConnection-class
+#' @export
+setMethod("dbListTables", "DomoConnection", domo_list_tables)
 
 
 # dbListFields ------------------------------------------------------------
+
+domo_list_fields <- function(conn, name, ...) {
+  with_refresh(conn@token, {
+    result <- retrieve_dataset(token = conn@token, dataset_id = name, ...)
+  })
+  map_chr(result$content$schema$columns, function(x) x$name)
+}
 
 #' @rdname DomoConnection-class
 #' @export
 setMethod(
   "dbListFields",
   c("DomoConnection", "character"),
-  function(conn, name, ...) {
-    with_refresh(conn@token, {
-      result <- retrieve_dataset(token = conn@token, dataset_id = name, ...)
-    })
-    map_chr(result$content$schema$columns, function(x) x$name)
-  }
+  domo_list_fields
 )
