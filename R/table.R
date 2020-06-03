@@ -1,21 +1,44 @@
+#' Convenience functions for reading/writing Domo datasets
+#'
+#' @param name
+#' * For `dbCreateTable`: the new dataset's name
+#' * For everything else: an existing dataset's ID
+#' @param temporary Must be `FALSE`. Domo cannot create temporary datasets.
+#' @examples
+#' \dontrun{
+#' library(DBI)
+#' con <- dbConnect(domo::domo())
+#' dbListTables(con)
+#' dataset_id <- dbCreateTable(con, "mtcars", mtcars)
+#' dbWriteTable(con, dataset_id, mtcars, overwrite = TRUE)
+#' dbReadTable(con, dataset_id)
+#'
+#' dbExistsTable(con, dataset_id)
+#'
+#' dbDisconnect(con)
+#' }
+#'
+#' @name domo-tables
+NULL
+
+
 # dbCreateTable -----------------------------------------------------------
 
-#' @rdname DomoConnection-class
+domo_create_table <- function(
+  conn, name, fields, ..., row.names = NULL, temporary = FALSE
+) {
+  assert_that(is.null(row.names), isFALSE(temporary))
+  token <- conn@token
+  result <- with_refresh(token, create_stream(token, name, fields))
+  id <- result$content$dataSet$id
+  message(glue::glue("Created dataset {id}"))
+  invisible(id)
+}
+
+#' @rdname domo-tables
+#' @inheritParams DBI::dbCreateTable
 #' @export
-setMethod(
-  "dbCreateTable",
-  "DomoConnection",
-  function(conn, name, fields, ..., row.names = NULL, temporary = FALSE) {
-    with_refresh(conn@token, {
-      result <- create_stream(
-        token = conn@token, name = name, schema = fields, ...
-      )
-    })
-    id <- result$content$dataSet$id
-    message(glue::glue("Created table {id}"))
-    invisible(id)
-  }
-)
+setMethod("dbCreateTable", "DomoConnection", domo_create_table)
 
 
 # dbWriteTable ------------------------------------------------------------
@@ -105,6 +128,30 @@ domo_upload_dataset <- function(con, dataset_id, data, update_method) {
   invisible(TRUE)
 }
 
+domo_check_fields <- function(con, dataset_id, data, update_method) {
+  data_fields <- domo_fields(data)
+  domo_fields <- domo_fields(con, dataset_id)
+
+  if (identical(data_fields, domo_fields)) {
+    return(invisible())
+  }
+
+  if (update_method == "APPEND"){
+    msg <- "Cannot append due to mismatch in fields / data types."
+    rlang::abort(
+      msg,
+      class = "domo_invalid_schema",
+      data_fields = data_fields,
+      domo_fields = domo_fields
+    )
+  }
+
+  with_refresh(con@token, {
+    update_dataset(con@token, dataset_id, schema = data_fields)
+  })
+  invisible()
+}
+
 domo_write_table <- function(
   conn,
   name,
@@ -125,6 +172,7 @@ domo_write_table <- function(
   )
   domo_check_dataset_exists(conn, dataset_id = name)
   update_method <- domo_choose_update_method(overwrite, append)
+  domo_check_fields(conn, name, data, update_method)
 
   if (stream) {
     domo_upload_stream(conn, name, data, update_method)
@@ -134,103 +182,127 @@ domo_write_table <- function(
 }
 
 
-#' @rdname DomoConnection-class
+#' @rdname domo-tables
+#' @inheritParams DBI::dbWriteTable
+#' @param overwrite Allow overwriting the destination dataset. Cannot be `TRUE`
+#'   if `append` is also `TRUE`.
+#' @param append Allow appending to the destination table. Cannot be `TRUE`
+#'   if `overwrite` is also `TRUE`.
+#' @param stream If `TRUE` use
+#'   [Stream API](https://developer.domo.com/docs/streams-api-reference/streams),
+#'   otherwise use [Dataset API](https://developer.domo.com/docs/dataset-api-reference/dataset).
 #' @export
-setMethod(
-  "dbWriteTable",
-  c("DomoConnection", "character"),
-  domo_write_table
-)
+setMethod("dbWriteTable", c("DomoConnection", "character"), domo_write_table)
+
+
+# dbAppendTable -----------------------------------------------------------
+
+domo_append_table <- function(
+  conn, name, value, ..., stream = TRUE, row.names = NULL
+) {
+  ellipsis::check_dots_empty()
+  assert_that(is.null(row.names))
+  domo_write_table(conn, name, value, stream = stream, append = TRUE)
+}
+
+#' @rdname domo-tables
+#' @inheritParams DBI::dbAppendTable
+#' @export
+setMethod("dbAppendTable", c("DomoConnection", "character"), domo_append_table)
 
 
 # dbReadTable -------------------------------------------------------------
 
-#' @rdname DomoConnection-class
+domo_read_table <- function(conn, name, ...) {
+  token <- conn@token
+  with_refresh(token, {
+    result <- retrieve_dataset(token = token, dataset_id = name)
+    if (result$content$rows == 0) {
+      columns <- result$content$schema$columns
+      names <- map_chr(columns, function(x) x$name)
+      out <- r_data_type(map_chr(columns, function(x) x$type))
+      out <- rlang::set_names(out, names)
+      return(dplyr::as_tibble(out))
+    } else {
+      result <- export_dataset(token = token, dataset_id = name, ...)
+      result$content
+    }
+  })
+}
+
+#' @rdname domo-tables
+#' @inheritParams DBI::dbReadTable
 #' @export
-setMethod(
-  "dbReadTable",
-  c("DomoConnection", "character"),
-  function(conn, name, ...) {
-    with_refresh(conn@token, {
-      result <- retrieve_dataset(token = conn@token, dataset_id = name)
-      if (result$content$rows == 0) {
-        columns <- result$content$schema$columns
-        names <- map_chr(columns, function(x) x$name)
-        out <- r_data_type(map_chr(columns, function(x) x$type))
-        out <- rlang::set_names(out, names)
-        return(dplyr::as_tibble(out))
-      } else {
-        result <- export_dataset(token = conn@token, dataset_id = name, ...)
-        result$content
-      }
-    })
-  }
-)
+setMethod("dbReadTable", c("DomoConnection", "character"), domo_read_table)
 
 
 # dbRemoveTable -----------------------------------------------------------
 
-#' @rdname DomoConnection-class
+domo_remove_table <- function(conn, name, ...) {
+  with_refresh(conn@token, {
+    delete_dataset(token = conn@token, dataset_id = name, ...)
+  })
+  invisible(TRUE)
+}
+
+#' @rdname domo-tables
+#' @inheritParams DBI::dbRemoveTable
 #' @export
-setMethod(
-  "dbRemoveTable",
-  c("DomoConnection", "character"),
-  function(conn, name, ...) {
-    with_refresh(conn@token, {
-      delete_dataset(token = conn@token, dataset_id = name, ...)
-    })
-    invisible(TRUE)
-  }
-)
+setMethod("dbRemoveTable", c("DomoConnection", "character"), domo_remove_table)
 
 
 # dbExistsTable -----------------------------------------------------------
 
-#' @rdname DomoConnection-class
+domo_exists_table <- function(conn, name, ...) {
+  withRestarts(
+    withCallingHandlers(
+      with_refresh(conn@token, {
+        retrieve_dataset(token = conn@token, dataset_id = name, ...)
+        TRUE
+      }),
+      domo_api_error = function(e) {
+        if (e$response$status_code == 404) invokeRestart("not_found")
+      }
+    ),
+    not_found = function() FALSE
+  )
+}
+
+#' @rdname domo-tables
+#' @inheritParams DBI::dbExistsTable
 #' @export
-setMethod(
-  "dbExistsTable",
-  c("DomoConnection", "character"),
-  function(conn, name, ...) {
-    withRestarts(
-      withCallingHandlers(
-        with_refresh(conn@token, {
-          retrieve_dataset(token = conn@token, dataset_id = name, ...)
-          TRUE
-        }),
-        domo_api_error = function(e) {
-          if (e$response$status_code == 404) invokeRestart("not_found")
-        }
-      ),
-      not_found = function() FALSE
-    )
-  }
-)
+setMethod("dbExistsTable", c("DomoConnection", "character"), domo_exists_table)
 
 
 # dbListTables ------------------------------------------------------------
 
-#' @rdname DomoConnection-class
-#' @export
-setMethod("dbListTables", c("DomoConnection"), function(conn, ...) {
+domo_list_tables <- function(conn, ...) {
   with_refresh(conn@token, {
     result <- list_datasets(conn@token, ...)
   })
   map_chr(result$content, function(x) x$id)
-})
+}
+
+#' @rdname domo-tables
+#' @inheritParams DBI::dbListTables
+#' @export
+setMethod("dbListTables", "DomoConnection", domo_list_tables)
 
 
 # dbListFields ------------------------------------------------------------
 
-#' @rdname DomoConnection-class
+domo_list_fields <- function(conn, name, ...) {
+  with_refresh(conn@token, {
+    result <- retrieve_dataset(token = conn@token, dataset_id = name, ...)
+  })
+  map_chr(result$content$schema$columns, function(x) x$name)
+}
+
+#' @rdname domo-tables
+#' @inheritParams DBI::dbListFields
 #' @export
 setMethod(
   "dbListFields",
   c("DomoConnection", "character"),
-  function(conn, name, ...) {
-    with_refresh(conn@token, {
-      result <- retrieve_dataset(token = conn@token, dataset_id = name, ...)
-    })
-    map_chr(result$content$schema$columns, function(x) x$name)
-  }
+  domo_list_fields
 )

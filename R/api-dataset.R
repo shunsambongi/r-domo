@@ -12,6 +12,19 @@ create_dataset <- function(token, name, schema, description = "", ...) {
   )
 }
 
+update_dataset <- function(
+  token, dataset_id, ..., name = NULL, description = NULL, schema = NULL
+) {
+  ellipsis::check_dots_empty()
+  body <- compact(dataset_body(name, description, schema))
+  PUT(
+    "/v1/datasets/{dataset_id}",
+    token,
+    body = body,
+    encode = "json"
+  )
+}
+
 delete_dataset <- function(token, dataset_id, ...) {
   DELETE(
     "/v1/datasets/{dataset_id}",
@@ -68,8 +81,6 @@ import_dataset <- function(
 # helpers -----------------------------------------------------------------
 
 dataset_body <- function(name, description, schema) {
-  if (is.data.frame(schema)) {
-    schema <- domo_schema(schema)
-  }
-  named_list(name, description, schema = list(columns = schema))
+  schema <- unclass(as_dataset_schema(schema))
+  named_list(name, description, schema = schema)
 }
