@@ -1,3 +1,27 @@
+#' Convenience functions for reading/writing Domo datasets
+#'
+#' @param name
+#' * For `dbCreateTable`: the new dataset's name
+#' * For everything else: an existing dataset's ID
+#' @param temporary Must be `FALSE`. Domo cannot create temporary datasets.
+#' @examples
+#' \dontrun{
+#' library(DBI)
+#' con <- dbConnect(domo::domo())
+#' dbListTables(con)
+#' dataset_id <- dbCreateTable(con, "mtcars", mtcars)
+#' dbWriteTable(con, dataset_id, mtcars, overwrite = TRUE)
+#' dbReadTable(con, dataset_id)
+#'
+#' dbExistsTable(con, dataset_id)
+#'
+#' dbDisconnect(con)
+#' }
+#'
+#' @name domo-tables
+NULL
+
+
 # dbCreateTable -----------------------------------------------------------
 
 domo_create_table <- function(
@@ -11,7 +35,8 @@ domo_create_table <- function(
   invisible(id)
 }
 
-#' @rdname DomoConnection-class
+#' @rdname domo-tables
+#' @inheritParams DBI::dbCreateTable
 #' @export
 setMethod("dbCreateTable", "DomoConnection", domo_create_table)
 
@@ -132,13 +157,17 @@ domo_write_table <- function(
 }
 
 
-#' @rdname DomoConnection-class
+#' @rdname domo-tables
+#' @inheritParams DBI::dbWriteTable
+#' @param overwrite Allow overwriting the destination dataset. Cannot be `TRUE`
+#'   if `append` is also `TRUE`.
+#' @param append Allow appending to the destination table. Cannot be `TRUE`
+#'   if `overwrite` is also `TRUE`.
+#' @param stream If `TRUE` use
+#'   [Stream API](https://developer.domo.com/docs/streams-api-reference/streams),
+#'   otherwise use [Dataset API](https://developer.domo.com/docs/dataset-api-reference/dataset).
 #' @export
-setMethod(
-  "dbWriteTable",
-  c("DomoConnection", "character"),
-  domo_write_table
-)
+setMethod("dbWriteTable", c("DomoConnection", "character"), domo_write_table)
 
 
 # dbAppendTable -----------------------------------------------------------
@@ -151,13 +180,10 @@ domo_append_table <- function(
   domo_write_table(conn, name, value, stream = stream, append = TRUE)
 }
 
-#' @rdname DomoConnection-class
+#' @rdname domo-tables
+#' @inheritParams DBI::dbAppendTable
 #' @export
-setMethod(
-  "dbAppendTable",
-  c("DomoConnection", "character"),
-  domo_append_table
-)
+setMethod("dbAppendTable", c("DomoConnection", "character"), domo_append_table)
 
 
 # dbReadTable -------------------------------------------------------------
@@ -179,13 +205,10 @@ domo_read_table <- function(conn, name, ...) {
   })
 }
 
-#' @rdname DomoConnection-class
+#' @rdname domo-tables
+#' @inheritParams DBI::dbReadTable
 #' @export
-setMethod(
-  "dbReadTable",
-  c("DomoConnection", "character"),
-  domo_read_table
-)
+setMethod("dbReadTable", c("DomoConnection", "character"), domo_read_table)
 
 
 # dbRemoveTable -----------------------------------------------------------
@@ -197,13 +220,10 @@ domo_remove_table <- function(conn, name, ...) {
   invisible(TRUE)
 }
 
-#' @rdname DomoConnection-class
+#' @rdname domo-tables
+#' @inheritParams DBI::dbRemoveTable
 #' @export
-setMethod(
-  "dbRemoveTable",
-  c("DomoConnection", "character"),
-  domo_remove_table
-)
+setMethod("dbRemoveTable", c("DomoConnection", "character"), domo_remove_table)
 
 
 # dbExistsTable -----------------------------------------------------------
@@ -223,13 +243,10 @@ domo_exists_table <- function(conn, name, ...) {
   )
 }
 
-#' @rdname DomoConnection-class
+#' @rdname domo-tables
+#' @inheritParams DBI::dbExistsTable
 #' @export
-setMethod(
-  "dbExistsTable",
-  c("DomoConnection", "character"),
-  domo_exists_table
-)
+setMethod("dbExistsTable", c("DomoConnection", "character"), domo_exists_table)
 
 
 # dbListTables ------------------------------------------------------------
@@ -241,7 +258,8 @@ domo_list_tables <- function(conn, ...) {
   map_chr(result$content, function(x) x$id)
 }
 
-#' @rdname DomoConnection-class
+#' @rdname domo-tables
+#' @inheritParams DBI::dbListTables
 #' @export
 setMethod("dbListTables", "DomoConnection", domo_list_tables)
 
@@ -255,7 +273,8 @@ domo_list_fields <- function(conn, name, ...) {
   map_chr(result$content$schema$columns, function(x) x$name)
 }
 
-#' @rdname DomoConnection-class
+#' @rdname domo-tables
+#' @inheritParams DBI::dbListFields
 #' @export
 setMethod(
   "dbListFields",

@@ -1,5 +1,9 @@
 # domo (development version)
 
+* New `dbGetInfo` methods for `DomoDriver`, `DomoConnection`, and `DomoResult` 
+  classes.
+* New `dbGetRowsAffected` method for `DomoResult` class. This method always 
+  returns 0, since it is not possible to execute SQL.
 * New `dbAppendTable` method for `DomoConnection` class.
 * Parameterized queries now possible using `dbSendQuery`, `dbBind`, and
   `dbFetch`.
