@@ -1,0 +1,25 @@
+destination: docs
+
+reference:
+- title: Connecting and disconnecting
+  desc: Connecting to and disconnecting from a Domo instance.
+- contents:
+  - domo
+  - dbConnect,DomoDriver-method
+  - DomoConnection
+
+- title: Datasets (tables)
+  desc: Reading and writing datasets.
+- contents:
+  - domo-tables
+
+- title: Queries / Results
+  desc: Sending queries.
+- contents:
+  - dbSendQuery,DomoConnection,character-method
+  - DomoResult
+
+- title: All functions
+- contents:
+  - matches(".*")
+
