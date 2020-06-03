@@ -10,6 +10,7 @@
 \alias{dbSendQuery,DomoConnection,character-method}
 \alias{dbCreateTable,DomoConnection-method}
 \alias{dbWriteTable,DomoConnection,character-method}
+\alias{dbAppendTable,DomoConnection,character-method}
 \alias{dbReadTable,DomoConnection,character-method}
 \alias{dbRemoveTable,DomoConnection,character-method}
 \alias{dbExistsTable,DomoConnection,character-method}
@@ -38,6 +39,8 @@
   append = FALSE,
   stream = TRUE
 )
+
+\S4method{dbAppendTable}{DomoConnection,character}(conn, name, value, ..., stream = TRUE, row.names = NULL)
 
 \S4method{dbReadTable}{DomoConnection,character}(conn, name, ...)
 
