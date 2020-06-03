@@ -1,5 +1,6 @@
 # domo (development version)
 
+* New `pkgdown` website.
 * New `dbGetInfo` methods for `DomoDriver`, `DomoConnection`, and `DomoResult` 
   classes.
 * New `dbGetRowsAffected` method for `DomoResult` class. This method always 

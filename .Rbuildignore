@@ -1,5 +1,8 @@
 ^domo\.Rproj$
 ^\.Rproj\.user$
 ^LICENSE\.md$
-^expired\.Rds$
 ^README\.Rmd$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^\.github$
