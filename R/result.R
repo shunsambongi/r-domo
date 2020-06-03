@@ -50,24 +50,59 @@ obj_print_footer.domo_result_set <- function(x, ...) {
 
 # DomoResult --------------------------------------------------------------
 
-#' Domo results class
+#' Domo Result Methods
 #'
-#' @keywords internal
-#' @export
-setClass("DomoResult", contains = "DBIResult", slots = list(
-  result_set = "domo_result_set"
-))
+#' Implementations of pure virtual functions defined in the `DBI` package for
+#' DomoResult objects.
+#' @name DomoResult
+#' @docType methods
+#' @examples
+#' \dontrun{
+#' library(DBI)
+#' con <- dbConnect(domo::domo())
+#' dataset_id <- "77194824-a5c1-11ea-9600-0116159276e2"
+#' res <- dbSendQuery(con, "SELECT mpg FROM mtcars WHERE mpg > ?", dataset_id)
+#' dbBind(res, list(20))
+#' dbHasCompleted(res)
+#' dbGetRowCount(res)
+#'
+#' dbFetch(res, n = 1)
+#' dbHasCompleted(res)
+#' dbGetRowCount(res)
+#'
+#' dbFetch(res)
+#' dbHasCompleted(res)
+#' dbGetRowCount(res)
+#'
+#' dbClearResult(res)
+#' dbDisconnect(con)
+#' }
+NULL
 
+#' @rdname DomoResult
 #' @export
-#' @rdname DomoResult-class
-setMethod("show", "DomoResult", function(object) {
-  cat("<DomoResult>\n")
-  if (object@result_set$cleared) {
-    cat("EXPIRED\n")
-  } else {
-    vctrs::obj_print_data(object@result_set)
+setClass(
+  "DomoResult",
+  contains = "DBIResult",
+  slots = list(
+    result_set = "domo_result_set"
+  )
+)
+
+#' @rdname DomoResult
+#' @inheritParams methods::show
+#' @export
+setMethod(
+  "show", "DomoResult",
+  function(object) {
+    cat("<DomoResult>\n")
+    if (object@result_set$cleared) {
+      cat("EXPIRED\n")
+    } else {
+      vctrs::obj_print_data(object@result_set)
+    }
   }
-})
+)
 
 
 # dbIsValid ---------------------------------------------------------------
@@ -77,28 +112,10 @@ domo_result_is_valid <- function(dbObj, ...) {
   !dbObj@result_set$cleared
 }
 
+#' @rdname DomoResult
+#' @inheritParams DBI::dbIsValid
 #' @export
-#' @rdname DomoResult-class
 setMethod("dbIsValid", "DomoResult", domo_result_is_valid)
-
-
-# dbSendQuery -------------------------------------------------------------
-
-domo_send_query <- function(conn, statement, dataset_id, ...) {
-  ellipsis::check_dots_empty()
-  rs <- domo_result_set(conn, statement, dataset_id)
-
-  peek <- domo_fetch_data(rs, limit = 1)
-  if (!nrow(peek)) {
-    rs$complete <- TRUE
-  }
-
-  new("DomoResult", result_set = rs)
-}
-
-#' @rdname DomoConnection-class
-#' @export
-setMethod("dbSendQuery", c("DomoConnection", "character"), domo_send_query)
 
 
 # dbBind ------------------------------------------------------------------
@@ -113,8 +130,9 @@ domo_bind <- function(res, params, ...) {
   invisible(res)
 }
 
+#' @rdname DomoResult
+#' @inheritParams DBI::dbBind
 #' @export
-#' @rdname DomoResult-class
 setMethod("dbBind", "DomoResult", domo_bind)
 
 
@@ -188,7 +206,8 @@ domo_fetch_sql <- function(rs, limit, offset) {
   dbplyr::escape(query, parens = FALSE, collapse = "\n", con = con)
 }
 
-#' @rdname DomoResult-class
+#' @rdname DomoResult
+#' @inheritParams DBI::dbFetch
 #' @export
 setMethod("dbFetch", "DomoResult", domo_fetch)
 
@@ -201,9 +220,18 @@ domo_get_row_count <- function(res, ...) {
   rs$fetched
 }
 
-#' @rdname DomoResult-class
+#' @rdname DomoResult
+#' @inheritParams DBI::dbGetRowCount
 #' @export
 setMethod("dbGetRowCount", "DomoResult", domo_get_row_count)
+
+
+# dbGetRowsAffected -------------------------------------------------------
+
+#' @rdname DomoResult
+#' @inheritParams DBI::dbGetRowsAffected
+#' @export
+setMethod("dbGetRowsAffected", "DomoResult", function(res, ...) 0)
 
 
 # dbGetStatement ----------------------------------------------------------
@@ -214,7 +242,8 @@ domo_get_statement <- function(res, ...) {
   rs$sql
 }
 
-#' @rdname DomoResult-class
+#' @rdname DomoResult
+#' @inheritParams DBI::dbGetStatement
 #' @export
 setMethod("dbGetStatement", "DomoResult", domo_get_statement)
 
@@ -231,7 +260,8 @@ domo_column_info <- function(res, ...) {
   dplyr::tibble(name, type)
 }
 
-#' @rdname DomoResult-class
+#' @rdname DomoResult
+#' @inheritParams DBI::dbColumnInfo
 #' @export
 setMethod("dbColumnInfo", "DomoResult", domo_column_info)
 
@@ -251,7 +281,8 @@ domo_clear_result <- function(res, ...) {
   invisible(TRUE)
 }
 
-#' @rdname DomoResult-class
+#' @rdname DomoResult
+#' @inheritParams DBI::dbClearResult
 #' @export
 setMethod("dbClearResult", "DomoResult", domo_clear_result)
 
@@ -264,10 +295,7 @@ domo_has_completed <- function(res, ...) {
   rs$complete
 }
 
-#' @rdname DomoResult-class
+#' @rdname DomoResult
+#' @inheritParams DBI::dbHasCompleted
 #' @export
 setMethod("dbHasCompleted", "DomoResult", domo_has_completed)
-
-
-
-
